@@ -23,7 +23,7 @@ namespace NoteyApp.Controllers
         {
             var notes = _noteRepository.GetAllNotes().Where(n => n.IsDeleted == false);
 
-            return View();
+            return View(notes);
         }
 
         public IActionResult NoteDetail(Guid id)
@@ -48,30 +48,37 @@ namespace NoteyApp.Controllers
         [HttpPost]
         public IActionResult NoteEditor(NoteModel noteModel) //TODO Connect to EntityFrameWork
         {
-            var date = DateTime.Now;
-            if (noteModel == null)
+            if (ModelState.IsValid)
             {
-                return BadRequest();
-            }
+                var date = DateTime.Now;
+                if (noteModel == null)
+                {
+                    return BadRequest();
+                }
 
-            if (noteModel.NoteId == Guid.Empty)
-            {
-                noteModel.NoteId = Guid.NewGuid();
-                noteModel.CreatedDate = date;
-                noteModel.LastModifiedDate = date;
+                if (noteModel.NoteId == Guid.Empty)
+                {
+                    noteModel.NoteId = Guid.NewGuid();
+                    noteModel.CreatedDate = date;
+                    noteModel.LastModifiedDate = date;
 
-                _noteRepository.SaveNote(noteModel);
+                    _noteRepository.SaveNote(noteModel);
+                }
+                else
+                {
+                    var note = _noteRepository.FindNoteById(noteModel.NoteId);
+                    note.LastModifiedDate = date;
+                    note.Subject = noteModel.Subject;
+                    note.Detail = noteModel.Detail;
+
+                }
+
+                return RedirectToAction("Index");
             }
             else
             {
-                var note = _noteRepository.FindNoteById(noteModel.NoteId);
-                note.LastModifiedDate = date;
-                note.Subject = noteModel.Subject;
-                note.Detail = noteModel.Detail;
-
+                return View();
             }
-
-            return RedirectToAction("Index");
         }
 
         public IActionResult DeleteNote(Guid id)  //TODO Connect to EntityFrameWork
